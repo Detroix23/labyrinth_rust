@@ -1,0 +1,9 @@
+[package]
+name = "labyrinth"
+version = "0.1.0"
+edition = "2024"
+authors = ["Detroix23"]
+
+[dependencies]
+grid = { version = "^0", path = "../grid" }
+rand = "0.9.1"

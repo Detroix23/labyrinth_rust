@@ -1,0 +1,6 @@
+# Ignore Rust compiling
+/target
+Cargo.lock
+
+# Ignore non-code
+/assets
