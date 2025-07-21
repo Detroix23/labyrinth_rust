@@ -4,7 +4,7 @@
 use std::{collections::HashMap, io};
 
 // Imports
-use grid::{self, grid_init, grid_inline, grid_state_tile, grid_update_tile, Grid, Tile, TileState, UiTiles, TileFeatures};
+use grid::{self, Grid, GridKind, Tile, TileFeatures, TileState, UiTiles};
 use rand::{rng, Rng, seq::{self, IndexedRandom}};
 
 // Vars
@@ -65,7 +65,7 @@ pub const LABYRINTH_UI_TILES: UiTiles = UiTiles {
     void: "▒▒"
 };
 
-/// DEBUG - Activate.
+/// DEBUG - Activate.           d
 pub const DEBUG_ON: bool = true;
 
 /// DEBUG - Define kind of info that are available
@@ -86,14 +86,13 @@ pub fn generator_random_memory_based(grid_size: usize, iteration_limit: usize, l
     // Init
     let grid_default_state: bool = false;
     let grid_default_features: Vec<TileFeatures> = Vec::new();
-    let grid_kind: String = String::from("1sq");
-    let mut grid_labyrinth: Grid = grid_init(grid_kind, grid_size, grid_default_state);  
+    let grid_kind: GridKind = GridKind::Squares;
+    let mut grid_labyrinth: Grid = Grid::new(grid_kind, grid_size, grid_default_state);  
     let mut counter: usize = 0; 
 
     // Start at the middle of the grid
     let mut generator_position: Position = Position { x: grid_labyrinth.size.x as i32 / 2, y: grid_labyrinth.size.y as i32 / 2 };
-    grid_labyrinth = grid_update_tile(
-        grid_labyrinth, 
+    grid_labyrinth.update_tile(
         generator_position.x, 
         generator_position.y, 
         !grid_default_state, 
@@ -124,18 +123,18 @@ pub fn generator_random_memory_based(grid_size: usize, iteration_limit: usize, l
 
             // Move like it is good.
             generator_position = Position { x: generator_position.x + offset_x, y: generator_position.y + offset_y};
-            let generator_position_state: TileState = grid_state_tile(&grid_labyrinth, generator_position.x, generator_position.y);
+            let generator_position_state: TileState = grid_labyrinth.state_tile(generator_position.x, generator_position.y);
             // Check neighbours, with the "field of view", according to the offset.
             let mut generator_neighbours_pass: bool = true;
             if offset_x == 0 {
                 for neighbour in NEIGHBOURS_ARC_Y_1 {
-                    if grid_state_tile(&grid_labyrinth, generator_position.x + neighbour.x, generator_position.y + offset_y * neighbour.y) != TileState::Off {
+                    if grid_labyrinth.state_tile(generator_position.x + neighbour.x, generator_position.y + offset_y * neighbour.y) != TileState::Off {
                         generator_neighbours_pass = false;
                     }
                 }
             } else {
                 for neighbour in NEIGHBOURS_ARC_X_1 {
-                    if grid_state_tile(&grid_labyrinth, generator_position.x + offset_x * neighbour.x, generator_position.y + neighbour.y) != TileState::Off {
+                    if grid_labyrinth.state_tile(generator_position.x + offset_x * neighbour.x, generator_position.y + neighbour.y) != TileState::Off {
                         generator_neighbours_pass = false;
                     }
                 }
@@ -145,7 +144,7 @@ pub fn generator_random_memory_based(grid_size: usize, iteration_limit: usize, l
             if DEBUG_LOGGING == DebugLogging::All {print!("Gene pos: x={}, y={}; ", generator_position.x, generator_position.y);}
             
             if generator_position_state == TileState::Off && generator_neighbours_pass {
-                grid_labyrinth = grid_update_tile(grid_labyrinth, generator_position.x, generator_position.y, !grid_default_state, grid_default_features.clone());
+                grid_labyrinth.update_tile(generator_position.x, generator_position.y, !grid_default_state, grid_default_features.clone());
                 good_path = true;
             } else {
                 // Nevermind, tile was not good.
@@ -173,7 +172,7 @@ pub fn generator_random_memory_based(grid_size: usize, iteration_limit: usize, l
         }
         if DEBUG_LOGGING == DebugLogging::All {
             println!("");
-            grid_inline(&grid_labyrinth, &LABYRINTH_UI_TILES, &labyrinth_ui_features);
+            grid_labyrinth.display_inline(&LABYRINTH_UI_TILES, &labyrinth_ui_features);
         }
         
     }
@@ -214,7 +213,7 @@ fn main() {
     // Results
     let labyrinth: Grid = generator_random_memory_based(labyrinth_size, iteration_limit, &labyrinth_ui_features);
     println!("\n## Results - Labyrinth: ");
-    grid_inline(&labyrinth, &LABYRINTH_UI_TILES, &labyrinth_ui_features);
+    labyrinth.display_inline(&LABYRINTH_UI_TILES, &labyrinth_ui_features);
 
     // Prevent window of closing
     println!("\nPress enter to exit... ");
