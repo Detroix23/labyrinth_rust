@@ -7,6 +7,7 @@ use std::{collections::HashMap, io};
 use grid::{self, Grid, GridKind, Tile, TileFeatures, TileState, UiTiles};
 use rand::{rng, Rng, seq::{self, IndexedRandom}};
 
+
 // Vars
 /// Private struct to locate the generator.
 #[derive(Clone, Copy)]
@@ -55,6 +56,17 @@ const NEIGHBOURS_ARC_X_1: [Position; 5] = [
     Position { x: 0, y: -1},
 ];
 
+/// Behaviour of the engine when stuck
+pub enum StuckReaction {
+    OneStepBack,
+    RandomPosition,
+}
+
+/// DEFAULT - Size
+pub const DEFAULT_SIZE: usize = 32;
+/// DEFAULT - Iteration limit
+pub const DEFAULT_ITERATION_LIMIT: usize = 0;
+
 // UI - Visualisation of the features on the tiles
 // cf. vars defs.
 
@@ -87,6 +99,7 @@ pub fn generator_random_memory_based(grid_size: usize, iteration_limit: usize, l
     let grid_default_state: bool = false;
     let grid_default_features: Vec<TileFeatures> = Vec::new();
     let grid_kind: GridKind = GridKind::Squares;
+    let stuck_reaction: StuckReaction = StuckReaction::RandomPosition;
     let mut grid_labyrinth: Grid = Grid::new(grid_kind, grid_size, grid_default_state);  
     let mut counter: usize = 0; 
 
@@ -99,6 +112,7 @@ pub fn generator_random_memory_based(grid_size: usize, iteration_limit: usize, l
         vec![TileFeatures::Named("Entrance")]
     );
     let mut generator_path: Vec<Position> = vec![generator_position];
+    let mut generator_index: usize = 0;
     if DEBUG_LOGGING == DebugLogging::Minimal || DEBUG_LOGGING == DebugLogging::All {println!("- Vars initalized.\n- Starting main loop.");}
     
     // Generator, end when the generator has backed up totaly.
@@ -147,7 +161,7 @@ pub fn generator_random_memory_based(grid_size: usize, iteration_limit: usize, l
                 grid_labyrinth.update_tile(generator_position.x, generator_position.y, !grid_default_state, grid_default_features.clone());
                 good_path = true;
             } else {
-                // Nevermind, tile was not good.
+                // Nevermind, tile was not good, go back to the original tile.
                 generator_position = Position { x: generator_position.x - offset_x, y: generator_position.y - offset_y};
                 available_directions.remove(available_directions.iter().position(|d| d == direction).expect("(!) - Can't find direction."));
             }
@@ -155,16 +169,43 @@ pub fn generator_random_memory_based(grid_size: usize, iteration_limit: usize, l
 
         if good_path {
             generator_path.push(generator_position);
+            generator_index += 1;
             if DEBUG_LOGGING == DebugLogging::All {print!("Good path. ");}
         } else {
-            generator_path.pop();
-            if generator_path.len() > 0 {
-                if DEBUG_LOGGING == DebugLogging::All {print!("Stuck: rewinding. ");}
-                generator_position = *generator_path.last().expect("(!) - Path's empty. ");
-            } else {
-                if DEBUG_LOGGING == DebugLogging::Minimal || DEBUG_LOGGING == DebugLogging::All {println!("- Reached end. ");}
-                generator_position = Position {x: 0, y: 0};
+            if generator_index > 0 {
+                generator_index -= 1;
             }
+
+            let new_branch_start: usize;
+            match stuck_reaction {
+                // Method branch-random
+                StuckReaction::RandomPosition => {
+                    generator_path.remove(generator_index);
+
+                    if generator_path.len() > 0 {
+                        new_branch_start = rng().random_range(0..generator_path.len());
+                        if DEBUG_LOGGING == DebugLogging::All {print!("Stuck: rewinding (RP). ");}
+                        generator_position = generator_path[new_branch_start];
+                    } else {
+                        if DEBUG_LOGGING == DebugLogging::Minimal || DEBUG_LOGGING == DebugLogging::All {println!("- Reached end. ");}
+                        generator_position = Position {x: 0, y: 0};
+                    }
+                },
+                // Method branch-one-step-backward (as a default)
+                _ => {
+                    generator_path.pop();
+                    
+                    if generator_path.len() > 0 {
+                        new_branch_start = generator_path.len() - 1;
+                        if DEBUG_LOGGING == DebugLogging::All {print!("Stuck: rewinding (OSP). ");}
+                        generator_position = generator_path[new_branch_start];
+                    } else {
+                        if DEBUG_LOGGING == DebugLogging::Minimal || DEBUG_LOGGING == DebugLogging::All {println!("- Reached end. ");}
+                        generator_position = Position {x: 0, y: 0};
+                    }           
+                },
+            }
+
             
         }
         if iteration_limit >= 1 && counter >= iteration_limit {
@@ -193,21 +234,22 @@ fn main() {
     ]);
     // User input
     println!("## User input.");
-    println!("- Labyrinth size [N+](20): ");
+    println!("- Labyrinth size [N+]({DEFAULT_SIZE}): ");
     io::stdin()
         .read_line(&mut labyrinth_size_input)
         .expect("(X) - Can't read line.");
-    println!("- Iteration limit [0 = No limit/ N+](0): ");
+    let labyrinth_size: usize = match labyrinth_size_input.trim().parse() {
+        Ok(num) => num,
+        Err(_) => DEFAULT_SIZE,
+    };
+    println!("- Iteration limit [0 = No limit/ N+]({DEFAULT_ITERATION_LIMIT}): ");
     io::stdin()
         .read_line(&mut iteration_limit_input)
         .expect("(X) - Can't read line.");
-    let labyrinth_size: usize = match labyrinth_size_input.trim().parse() {
-        Ok(num) => num,
-        Err(_) => 20usize,
-    };
+    
     let iteration_limit: usize = match iteration_limit_input.trim().parse() {
         Ok(num) => num,
-        Err(_) => 0usize,
+        Err(_) => DEFAULT_ITERATION_LIMIT,
     };
 
     // Results
