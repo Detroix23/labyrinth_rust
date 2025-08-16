@@ -4,9 +4,10 @@
 use std::{collections::HashMap, io};
 
 // Imports
-use grid::{self, Grid, GridKind, Tile, TileFeatures, TileState, UiTiles};
-use rand::{rng, Rng, seq::{self, IndexedRandom}};
+use grid::{self, Grid, GridKind, TileFeatures, TileState, UiTiles};
+use rand::{rng, Rng, seq::{IndexedRandom}};
 
+mod file_handler;
 
 // Vars
 /// Private struct to locate the generator.
@@ -61,7 +62,8 @@ pub enum StuckReaction {
     OneStepBack,
     RandomPosition,
 }
-
+/// DEFAULT - Write file
+pub const DEFAULT_WRITE_TO_FILE: bool = true;
 /// DEFAULT - Size
 pub const DEFAULT_SIZE: usize = 32;
 /// DEFAULT - Iteration limit
@@ -172,20 +174,14 @@ pub fn generator_random_memory_based(grid_size: usize, iteration_limit: usize, l
             generator_index += 1;
             if DEBUG_LOGGING == DebugLogging::All {print!("Good path. ");}
         } else {
-            if generator_index > 0 {
-                generator_index -= 1;
-            }
-
-            let new_branch_start: usize;
+            generator_path.remove(generator_index);
             match stuck_reaction {
                 // Method branch-random
                 StuckReaction::RandomPosition => {
-                    generator_path.remove(generator_index);
-
                     if generator_path.len() > 0 {
-                        new_branch_start = rng().random_range(0..generator_path.len());
+                        generator_index = rng().random_range(0..generator_path.len());
                         if DEBUG_LOGGING == DebugLogging::All {print!("Stuck: rewinding (RP). ");}
-                        generator_position = generator_path[new_branch_start];
+                        generator_position = generator_path[generator_index];
                     } else {
                         if DEBUG_LOGGING == DebugLogging::Minimal || DEBUG_LOGGING == DebugLogging::All {println!("- Reached end. ");}
                         generator_position = Position {x: 0, y: 0};
@@ -193,12 +189,10 @@ pub fn generator_random_memory_based(grid_size: usize, iteration_limit: usize, l
                 },
                 // Method branch-one-step-backward (as a default)
                 _ => {
-                    generator_path.pop();
-                    
                     if generator_path.len() > 0 {
-                        new_branch_start = generator_path.len() - 1;
+                        generator_index -= 1;
                         if DEBUG_LOGGING == DebugLogging::All {print!("Stuck: rewinding (OSP). ");}
-                        generator_position = generator_path[new_branch_start];
+                        generator_position = generator_path[generator_index];
                     } else {
                         if DEBUG_LOGGING == DebugLogging::Minimal || DEBUG_LOGGING == DebugLogging::All {println!("- Reached end. ");}
                         generator_position = Position {x: 0, y: 0};
@@ -255,7 +249,10 @@ fn main() {
     // Results
     let labyrinth: Grid = generator_random_memory_based(labyrinth_size, iteration_limit, &labyrinth_ui_features);
     println!("\n## Results - Labyrinth: ");
-    labyrinth.display_inline(&LABYRINTH_UI_TILES, &labyrinth_ui_features);
+    // labyrinth.display_inline(&LABYRINTH_UI_TILES, &labyrinth_ui_features);
+    let labyrinth_string: String = labyrinth.to_string(&LABYRINTH_UI_TILES, &labyrinth_ui_features);
+    println!("{}", labyrinth_string);
+    
 
     // Prevent window of closing
     println!("\nPress enter to exit... ");
