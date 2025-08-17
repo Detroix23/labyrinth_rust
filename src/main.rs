@@ -1,11 +1,11 @@
 // LABYRINTH
 
-
-use std::{collections::HashMap, io};
-
 // Imports
+use std::{collections::HashMap, io};
+use std::time::{Duration, Instant};
 use grid::{self, Grid, GridKind, TileFeatures, TileState, UiTiles};
 use rand::{rng, Rng, seq::{IndexedRandom}};
+
 
 mod file_handler;
 
@@ -247,16 +247,23 @@ fn main() {
     };
 
     // Results
+    let time_grmb_start: Instant = Instant::now();
     let labyrinth: Grid = generator_random_memory_based(labyrinth_size, iteration_limit, &labyrinth_ui_features);
+    let time_grmb_duration: Duration = time_grmb_start.elapsed();
+
     println!("\n## Results - Labyrinth: ");
     // labyrinth.display_inline(&LABYRINTH_UI_TILES, &labyrinth_ui_features);
     let labyrinth_string: String = labyrinth.to_string(&LABYRINTH_UI_TILES, &labyrinth_ui_features);
     println!("{}", labyrinth_string);
-    
+    println!("- Generation time: {:?}", time_grmb_duration);
+
+    // Log
+    file_handler::new_labyrinth(format!(
+        "{}- Generation time: {:?}", 
+        labyrinth_string, time_grmb_duration
+    ));    
 
     // Prevent window of closing
     println!("\nPress enter to exit... ");
     let _ = io::stdin().read_line(&mut String::new()).expect("(X) - Can't read line; closing anyway.");
 }
-
-
