@@ -1,8 +1,6 @@
 // LABYRINTH
 // Generators
 
-use crate::basics::Subordination;
-
 use super::{HashMap, seq::IndexedRandom, rng, Rng};
 use super::{basics, ui, grid};
 
@@ -17,13 +15,15 @@ pub fn random_memory_based(
 ) -> grid::Grid {
     if ui::DEBUG_LOGGING == ui::DebugLogging::Minimal || ui::DEBUG_LOGGING == ui::DebugLogging::All {println!("## Generating labyrinth.");}
     // Init & generator settings
-    let grid_default_state: bool = false;
-    let stuck_reaction: basics::StuckReaction = basics::StuckReaction::RandomPosition;
+    let grid_default_state: bool = basics::DEFAULT_STATE;
+    let stuck_reaction: basics::StuckReaction = basics::DEFAULT_STUCK;
+    let islets: basics::Islet = basics::DEFAULT_ISLET;
+    let subordination: basics::Unsubordination = basics::DEFAULT_UNSUBORDINATION;
+
     let grid_default_features: Vec<grid::TileFeatures> = Vec::new();
     let grid_kind: grid::GridKind = grid::GridKind::Squares;
-    let islets: basics::Islet = basics::Islet::Yes(0.01f32);
-    let subordination: basics::Subordination = basics::Subordination::Yes(0.01f32);
 
+    // Init labyrinth's grid.
     let mut grid_labyrinth: grid::Grid = grid::Grid::new(grid_kind, grid_size, grid_default_state);  
     let mut counter: usize = 0; 
 
@@ -48,16 +48,42 @@ pub fn random_memory_based(
         if ui::DEBUG_LOGGING == ui::DebugLogging::All {print!(" - Iter {}; ", counter);}
         // Expect to find a good path; if not, if all direction are blocked
         while !good_path && available_directions.len() > 0 {
-            let mut offset_x: i8 = 0;
-            let mut offset_y: i8 = 0;
+            let offset_x: i8;
+            let offset_y: i8;
+            let arc_direction_x: i8;
+            let arc_direction_y: i8;
+            
+
             let direction: &basics::OrdinalDirections = available_directions.choose(&mut rand::rng()).expect("(!) - Something went wrong with the random choice");
-            let mut generator_on_border: bool = false;
+            
             match direction {
-                basics::OrdinalDirections::North => offset_y = 1,
-                basics::OrdinalDirections::East => offset_x = 1,
-                basics::OrdinalDirections::South => offset_y = -1,
-                basics::OrdinalDirections::West => offset_x = -1,
+                basics::OrdinalDirections::North => {
+                    offset_x = 0;
+                    offset_y = 1;
+                },
+                basics::OrdinalDirections::East => {
+                    offset_x = 1;
+                    offset_y = 0;
+                }
+                basics::OrdinalDirections::South => {
+                    offset_x = 0;
+                    offset_y = -1;
+                }
+                basics::OrdinalDirections::West => {
+                    offset_x = -1;
+                    offset_y = 0;
+                }
             };
+            if offset_x == -1 {
+                arc_direction_x = -1;
+            } else {
+                arc_direction_x = 1;
+            } if offset_y == -1 {
+                arc_direction_y = -1;
+            } else {
+                arc_direction_y = 1;
+            }
+
             ui::dp(format!("Dir, off: x={}, y={}; ", offset_x, offset_y), ui::DebugLogging::All);
 
             // Move like it is good.
@@ -66,6 +92,7 @@ pub fn random_memory_based(
             
             // Check neighbours, with the "field of view", according to the offset.
             let mut generator_neighbours_pass: bool = true;
+            let mut generator_on_border: bool = false;
             let generator_arc: [basics::Position; 5];
             if offset_x == 0 {
                 generator_arc = basics::NEIGHBOURS_ARC_Y_1;
@@ -73,18 +100,6 @@ pub fn random_memory_based(
                 generator_arc = basics::NEIGHBOURS_ARC_X_1;
             }
             for neighbour in generator_arc {
-                let arc_direction_x: i8;
-                let arc_direction_y: i8;
-                if offset_x == -1 {
-                    arc_direction_x = -1;
-                } else {
-                    arc_direction_x = 1;
-                } if offset_y == -1 {
-                    arc_direction_y = -1;
-                } else {
-                    arc_direction_y = 1;
-                }
-
                 let tile_state: grid::TileState = grid_labyrinth.state_tile(
                     generator_position.x + arc_direction_x as i32 * neighbour.x, 
                     generator_position.y + arc_direction_y as i32 * neighbour.y
@@ -105,19 +120,66 @@ pub fn random_memory_based(
                 }
             }
 
-            // Apply chance of islet, so reverting the check
+            // Other probable checks.
             if let basics::Islet::Yes(p) = islets 
                 && !generator_neighbours_pass 
-                && !generator_on_border {
+                && !generator_on_border 
+            {
+                // Apply chance of islet, so reverting the check
+                if rand::random::<f32>() <= p {
+                    let generator_arc_islet: [basics::Position; 2];
+                    let mut generator_islet_pass: bool = true;
+                    if offset_x == 0 {
+                        generator_arc_islet = basics::NEIGHBOURS_ARC_YI_1;
+                    } else {
+                        generator_arc_islet = basics::NEIGHBOURS_ARC_XI_1;
+                    }
+                    for neighbour in generator_arc_islet {
+                        let tile_state: grid::TileState = grid_labyrinth.state_tile(
+                            generator_position.x + arc_direction_x as i32 * neighbour.x, 
+                            generator_position.y + arc_direction_y as i32 * neighbour.y
+                        );
+                        match tile_state {
+                            grid::TileState::On => {
+                                generator_islet_pass = false;
+                                ui::dp(format!("On(I,{};{}), ", neighbour.x, neighbour.y), ui::DebugLogging::All);
+                            },
+                            grid::TileState::Void => {
+                                generator_islet_pass = false;
+                                generator_on_border = true;
+                                ui::dp(format!("Void(I,{};{}), ", neighbour.x, neighbour.y), ui::DebugLogging::All);
+                            },
+                            grid::TileState::Off => {
+                                ui::dp(format!("Off(I,{};{}), ", neighbour.x, neighbour.y), ui::DebugLogging::All);
+                            }
+                        }
+                    }
+
+                    if generator_islet_pass
+                        && !generator_on_border
+                    {
+                        generator_neighbours_pass = true;
+                        ui::dp(format!("Allowed islet {};", p), ui::DebugLogging::All);
+                    }
+                }
+            } else if let basics::Unsubordination::Yes(p) = subordination
+                && !generator_neighbours_pass 
+                && !generator_on_border 
+            {
+                // Unsubordination, ignoring all.
                 if rand::random::<f32>() <= p {
                     generator_neighbours_pass = true;
-                    ui::dp(format!("Allowed islet {};", p), ui::DebugLogging::All);
+                    ui::dp(format!("Unsubordination! {};", p), ui::DebugLogging::All); 
                 }
             }
 
+
             if ui::DEBUG_LOGGING == ui::DebugLogging::All {print!("Gene pos: x={}, y={}; ", generator_position.x, generator_position.y);}
             
-            if let grid::TileState::Off = generator_position_state && generator_neighbours_pass {
+            if let grid::TileState::Off = generator_position_state 
+                && generator_neighbours_pass 
+                && !generator_on_border 
+            {
                 // No neighbours, or allowed to create an islet.
                 grid_labyrinth.update_tile(generator_position.x, generator_position.y, !grid_default_state, grid_default_features.clone());
                 good_path = true;
@@ -178,3 +240,4 @@ pub fn random_memory_based(
 
     grid_labyrinth
 }
+

@@ -24,7 +24,7 @@ pub enum DebugLogging {
     None,
 }
 /// DEBUG - Which info to actually display.
-pub const DEBUG_LOGGING: DebugLogging = DebugLogging::All;
+pub const DEBUG_LOGGING: DebugLogging = DebugLogging::Minimal;
 
 /// According to DEBUG_LOGGING, print given text, or not.
 pub fn dp(text: String, level_min: DebugLogging) -> () {

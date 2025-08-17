@@ -14,12 +14,7 @@ mod file_handler;
 
 
 
-/// DEFAULT - Write file
-pub const DEFAULT_WRITE_TO_FILE: bool = false;
-/// DEFAULT - Size
-pub const DEFAULT_SIZE: usize = 32;
-/// DEFAULT - Iteration limit
-pub const DEFAULT_ITERATION_LIMIT: usize = 0;
+
 
 
 
@@ -38,22 +33,22 @@ fn main() {
     ]);
     // User input
     println!("## User input.");
-    println!("- Labyrinth size [N+]({DEFAULT_SIZE}): ");
+    println!("- Labyrinth size [N+]({}): ", basics::DEFAULT_SIZE);
     io::stdin()
         .read_line(&mut labyrinth_size_input)
         .expect("(X) - Can't read line.");
     let labyrinth_size: usize = match labyrinth_size_input.trim().parse() {
         Ok(num) => num,
-        Err(_) => DEFAULT_SIZE,
+        Err(_) => basics::DEFAULT_SIZE,
     };
-    println!("- Iteration limit [0 = No limit/ N+]({DEFAULT_ITERATION_LIMIT}): ");
+    println!("- Iteration limit [0 = No limit/ N+]({}): ", basics::DEFAULT_ITERATION_LIMIT);
     io::stdin()
         .read_line(&mut iteration_limit_input)
         .expect("(X) - Can't read line.");
     
     let iteration_limit: usize = match iteration_limit_input.trim().parse() {
         Ok(num) => num,
-        Err(_) => DEFAULT_ITERATION_LIMIT,
+        Err(_) => basics::DEFAULT_ITERATION_LIMIT,
     };
 
     // Results
@@ -68,7 +63,7 @@ fn main() {
     ui::dp(format!("- Generation time: {:?}\n", time_grmb_duration), ui::DebugLogging::Minimal);
 
     // Log
-    if DEFAULT_WRITE_TO_FILE {
+    if basics::DEFAULT_WRITE_TO_FILE {
         file_handler::new_labyrinth(format!(
             "{}- Generation time: {:?}", 
             labyrinth_string, time_grmb_duration
