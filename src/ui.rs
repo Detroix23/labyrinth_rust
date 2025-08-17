@@ -26,3 +26,12 @@ pub enum DebugLogging {
 }
 /// DEBUG - Which info to actually display.
 pub const DEBUG_LOGGING: DebugLogging = DebugLogging::Minimal;
+
+/// According to DEBUG_LOGGING, print given text, or not.
+pub fn dp(text: String, level_min: DebugLogging) -> () {
+    if DEBUG_LOGGING != DebugLogging::None {
+        if DEBUG_LOGGING == level_min || DEBUG_LOGGING == DebugLogging::All {
+            println!("{}", text);
+        }
+    }
+}

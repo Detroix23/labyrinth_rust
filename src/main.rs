@@ -65,7 +65,7 @@ fn main() {
     // labyrinth.display_inline(&LABYRINTH_UI_TILES, &labyrinth_ui_features);
     let labyrinth_string: String = labyrinth.to_string(&ui::LABYRINTH_UI_TILES, &labyrinth_ui_features);
     println!("{}", labyrinth_string);
-    println!("- Generation time: {:?}", time_grmb_duration);
+    ui::dp(format!("- Generation time: {:?}", time_grmb_duration), ui::DebugLogging::Minimal);
 
     // Log
     file_handler::new_labyrinth(format!(

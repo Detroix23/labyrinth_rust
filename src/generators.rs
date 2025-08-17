@@ -7,9 +7,14 @@ use super::{basics, ui, grid};
 /// # Labyrinth generator; memory based, no recursion.
 /// Take random directions and saved the path in a vector. It "hits a wall" if the tile after wich its facing is a path. When stuck, go back one step reading its memory.
 /// Iteration limit to zero to disable the limit.
-pub fn random_memory_based(grid_size: usize, iteration_limit: usize, labyrinth_ui_features: &HashMap<grid::TileFeatures, &'static str>) -> grid::Grid {
+pub fn random_memory_based(
+    grid_size: usize, 
+    iteration_limit: usize, 
+    labyrinth_ui_features: &HashMap<grid::TileFeatures, 
+    &'static str>
+) -> grid::Grid {
     if ui::DEBUG_LOGGING == ui::DebugLogging::Minimal || ui::DEBUG_LOGGING == ui::DebugLogging::All {println!("## Generating labyrinth.");}
-    // Init
+    // Init & generator settings
     let grid_default_state: bool = false;
     let grid_default_features: Vec<grid::TileFeatures> = Vec::new();
     let grid_kind: grid::GridKind = grid::GridKind::Squares;
