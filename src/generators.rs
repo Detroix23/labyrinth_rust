@@ -121,11 +121,15 @@ pub fn random_memory_based(
             }
 
             // Other probable checks.
-            if let basics::Islet::Yes(p) = islets 
+            if let basics::Islet::Yes(p) = islets
+                && let grid::TileState::On = grid_labyrinth.state_tile(
+                    generator_position.x + offset_x as i32,
+                    generator_position.y + offset_y as i32
+                )
                 && !generator_neighbours_pass 
                 && !generator_on_border 
             {
-                // Apply chance of islet, so reverting the check
+                // Apply chance of islet only if connect to another path, so reverting the check
                 if rand::random::<f32>() <= p {
                     let generator_arc_islet: [basics::Position; 2];
                     let mut generator_islet_pass: bool = true;

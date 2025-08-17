@@ -1,5 +1,5 @@
 // LABYRINTH
-// Basic constants and stuctures.
+// Basic constants, stuctures, and default basic generator values.
 
 
 // Vars
@@ -64,9 +64,9 @@ pub const DEFAULT_SIZE: usize = 32;
 /// DEFAULT - Iteration limit
 pub const DEFAULT_ITERATION_LIMIT: usize = 0;
 /// DEFAULT - Generator behaviour, if allow to create islet by doings "bridges".
-pub const DEFAULT_ISLET: Islet = Islet::Yes(0.02f32);
+pub const DEFAULT_ISLET: Islet = Islet::Yes(0.01f32);
 /// DEFAULT - Generator behaviour, unsubordination or to ignore all rules of wall contact, except exits.
-pub const DEFAULT_UNSUBORDINATION: Unsubordination = Unsubordination::Yes(0.005f32);
+pub const DEFAULT_UNSUBORDINATION: Unsubordination = Unsubordination::No;
 /// DEFAULT - Generator behaviour.
 pub const DEFAULT_STUCK: StuckReaction = StuckReaction::RandomPosition;
 /// DEFAULT - Generator behaviour.
