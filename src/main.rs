@@ -15,7 +15,7 @@ mod file_handler;
 
 
 /// DEFAULT - Write file
-pub const DEFAULT_WRITE_TO_FILE: bool = true;
+pub const DEFAULT_WRITE_TO_FILE: bool = false;
 /// DEFAULT - Size
 pub const DEFAULT_SIZE: usize = 32;
 /// DEFAULT - Iteration limit
@@ -65,13 +65,15 @@ fn main() {
     // labyrinth.display_inline(&LABYRINTH_UI_TILES, &labyrinth_ui_features);
     let labyrinth_string: String = labyrinth.to_string(&ui::LABYRINTH_UI_TILES, &labyrinth_ui_features);
     println!("{}", labyrinth_string);
-    ui::dp(format!("- Generation time: {:?}", time_grmb_duration), ui::DebugLogging::Minimal);
+    ui::dp(format!("- Generation time: {:?}\n", time_grmb_duration), ui::DebugLogging::Minimal);
 
     // Log
-    file_handler::new_labyrinth(format!(
-        "{}- Generation time: {:?}", 
-        labyrinth_string, time_grmb_duration
-    ));    
+    if DEFAULT_WRITE_TO_FILE {
+        file_handler::new_labyrinth(format!(
+            "{}- Generation time: {:?}", 
+            labyrinth_string, time_grmb_duration
+        ));
+    }
 
     // Prevent window of closing
     println!("\nPress Enter to exit... ");

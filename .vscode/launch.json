@@ -8,9 +8,11 @@
 			"type": "lldb",
 			"request": "launch",
 			"name": "Debug",
-			"program": "${workspaceFolder}/<executable file>",
+			"cargo": {
+				// Cargo command line to build the debug target. "args": ["build", "--bin=foo"] is another option
+				"args": []
+			},
 			"args": [],
-			"cwd": "${workspaceFolder}"
 		}
 	]
 }
